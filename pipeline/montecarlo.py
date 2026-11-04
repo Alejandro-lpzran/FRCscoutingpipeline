@@ -209,8 +209,6 @@ if __name__ == "__main__":
     else:
         print("Rankings not available yet")
 
-print("buffer")
-
-print("\nRP rates being used:")
-for k, v in rp_rates.items():
-    print(f"  {k}: {v}")
+    print("\nRP rates being used:")
+    for k, v in rp_rates.items():
+        print(f"  {k}: {v}")
