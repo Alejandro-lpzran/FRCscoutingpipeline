@@ -53,6 +53,10 @@ CYCLES = complete fuel retrieval loops: travel to field center -> collect balls 
 
 If foul values are negative, ignore them — data entry error.
 
+Values named tba_pred_* are predicted POINTS, not fuel counts. Never report them as fuel, cycles, or scouted performance.
+
+If scouted_matches is 0, nobody scouted this team at this event. Say "Not scouted" in Autonomous, Teleop, Endgame, and Cycle Analysis, and do not state or guess fuel counts, cycle profile, tower attempts, driving, or HUB timing. Base everything else only on rank, record, OPR, DPR, CCWM, and predictions, and say the assessment is limited. In the JSON, set auto_fuel_avg, auto_tower, teleop_fuel_avg, teleop_tower_level, climb_success_rate, avg_cycles, fuel_per_cycle, cycle_profile, and contributes_to_energized_rp, contributes_to_supercharged_rp, contributes_to_traversal_rp to null, and add "Not scouted" to red_flags.
+
 ---
 
 TEAM DATA:
