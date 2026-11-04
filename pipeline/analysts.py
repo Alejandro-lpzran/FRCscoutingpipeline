@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from google import genai
 from google.genai import types as genai_types
-from pipeline.buldteamdatafunc import build_team_data
+from pipeline.team_data import build_team_data
 from pipeline.paths import REPORTS_DIR
 
 load_dotenv()
