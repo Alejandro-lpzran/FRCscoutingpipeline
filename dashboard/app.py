@@ -50,7 +50,7 @@ COLUMN_GROUPS = {
                     "profile_gemini": "Profile (Gemini)", "profile_gpt": "Profile (GPT)"},
 }
 LABELS = {col: label for group in COLUMN_GROUPS.values() for col, label in group.items()}
-RANK_COLUMNS = ["rank", "rp", "tba_rank", "mc_rank", "mc_rp", "scouted"]
+RANK_COLUMNS = ["rank", "rp", "tba_rank", "mc_rank", "scouted"]
 CHART_METRICS = ["opr", "dpr", "ccwm", "total_fuel", "auto_fuel", "teleop_fuel", "cycles",
                  "fuel_per_cycle", "tower", "points", "fouls", "rp", "mc_rp"]
 MATCH_METRICS = {"teleop_fuel": "Teleop fuel", "auto_fuel": "Auto fuel", "teleop_cycles": "Cycles",
@@ -236,6 +236,26 @@ def match_bars(df, metric, title):
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 
+def show_montecarlo_ranking(rows):
+    st.markdown("### Monte Carlo ranking")
+    ranked = rows.dropna(subset=["mc_rank"]).sort_values("mc_rank")
+    if ranked.empty:
+        st.info("No Monte Carlo results to show. Run `python -m pipeline.montecarlo`.")
+        return
+    view = pd.DataFrame({
+        "MC rank": ranked["mc_rank"].astype("Int64"),
+        "Team": ranked["team"],
+        "Name": ranked["nickname"],
+        "MC RP": ranked["mc_rp"].round(2),
+        "Real rank": ranked["rank"].astype("Int64"),
+        "Real RP": ranked["rp"].astype("Int64"),
+        "Rank gap": (ranked["rank"] - ranked["mc_rank"]).astype("Int64"),
+    })
+    st.caption("Rank gap is real rank minus MC rank. Positive means the team finished worse than simulated. "
+               "The simulation only models win and Energized RP, so compare ranks rather than RP totals.")
+    st.dataframe(view, hide_index=True, width="stretch", height=min(38 + 35 * len(view), 560))
+
+
 def show_rankings(table, reports):
     filter_col, group_col = st.columns([1, 2])
     search = filter_col.text_input("Search team or name")
@@ -256,6 +276,8 @@ def show_rankings(table, reports):
         view = view.sort_values("Rank")
     st.caption(f"{len(view)} teams. Click a column header to sort.")
     st.dataframe(view, hide_index=True, width="stretch", height=min(38 + 35 * len(view), 560))
+
+    show_montecarlo_ranking(rows)
 
     bars_col, scatter_col = st.columns(2)
     with bars_col:
