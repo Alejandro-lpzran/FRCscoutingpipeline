@@ -37,9 +37,9 @@ OPENAI_KEY=your_openai_key
 ## Usage
 
 ```bash
-python base.py          # Pull and process TBA data
-python montecarlo.py    # Run tournament simulation
-python llm.py           # Generate AI scouting reports
+python -m pipeline.base          # Pull and process TBA data
+python -m pipeline.montecarlo    # Run tournament simulation
+python -m pipeline.step2         # Generate AI scouting reports
 ```
 
 ## Stack
