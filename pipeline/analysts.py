@@ -20,6 +20,9 @@ print("imports done")
 GEMINI_DIR = REPORTS_DIR / "gemini_reports"
 GPT_DIR    = REPORTS_DIR / "gpt_reports"
 
+GEMINI_MODEL = "gemini-3.6-flash"
+MAX_OUTPUT_TOKENS = 4000  # 1500 cut reports off mid-JSON
+
 # ── Keys ──────────────────────────────────────────────────────────────────────
 
 GEMINI_KEY    = os.getenv("GEMINI_KEY")
@@ -123,11 +126,11 @@ def analyze_team_gemini(team_number: str) -> str:
     contents = [genai_types.Content(role="user", parts=[genai_types.Part.from_text(text=prompt)])]
     config = genai_types.GenerateContentConfig(
         thinking_config=genai_types.ThinkingConfig(thinking_level="LOW"),
-        max_output_tokens=1500,
+        max_output_tokens=MAX_OUTPUT_TOKENS,
     )
     print(f"\n{'='*60}\nGEMINI ANALYSIS — Team {team_number}\n{'='*60}\n")
     response = ""
-    for chunk in client.models.generate_content_stream(model="gemini-1.5-flash-8b", contents=contents, config=config):
+    for chunk in client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=config):
         if chunk.text:
             print(chunk.text, end="", flush=True)
             response += chunk.text
@@ -141,7 +144,7 @@ def analyze_team_gpt(team_number: str) -> str:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=1500,
+        max_tokens=MAX_OUTPUT_TOKENS,
     )
     result = response.choices[0].message.content
     print(result)
