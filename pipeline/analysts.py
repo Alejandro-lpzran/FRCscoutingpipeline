@@ -19,7 +19,6 @@ print("imports done")
 
 GEMINI_DIR = REPORTS_DIR / "gemini_reports"
 GPT_DIR    = REPORTS_DIR / "gpt_reports"
-FINAL_DIR  = REPORTS_DIR / "final_reports"
 
 # ── Keys ──────────────────────────────────────────────────────────────────────
 
@@ -163,12 +162,6 @@ def run_full_pipeline(team_list: list, delay: int = 5):
 
     for i, team in enumerate(team_list):
         print(f"\n[{i+1}/{len(team_list)}] Processing team {team}...")
-        final_path = f"{FINAL_DIR}/final_{team}.txt"
-
-        if os.path.exists(final_path):
-            print(f"  Already complete, skipping.")
-            completed += 1
-            continue
 
         try:
             # Gemini
@@ -190,6 +183,8 @@ def run_full_pipeline(team_list: list, delay: int = 5):
                 gpt_report = analyze_team_gpt(team)
                 open(gpt_path, "w", encoding="utf-8").write(gpt_report)
                 time.sleep(delay)
+
+            completed += 1
 
         except Exception as e:
             print(f"\n  Team {team} FAILED: {e}")
@@ -229,21 +224,3 @@ if __name__ == "__main__":
         f.write(combined)
 
     print(f"Combined {len(files)} teams into all_reports.txt")
-
-    OUTPUT_FILE = REPORTS_DIR / "all_final_reports.txt"
- 
-    files = sorted([f for f in os.listdir(FINAL_DIR) if f.endswith(".txt")])
- 
-    combined = ""
-    for filename in files:
-        team = filename.replace("final_", "").replace(".txt", "")
-        with open(os.path.join(FINAL_DIR, filename), "r", encoding="utf-8") as f:
-            content = f.read()
-        combined += f"\n{'='*60}\nTEAM {team}\n{'='*60}\n{content}\n"
- 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(combined)
-    print(f"Combined {len(files)} reports into {OUTPUT_FILE}")
-
-
- 
