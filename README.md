@@ -10,11 +10,11 @@ Pulls live match and team data from The Blue Alliance API, runs a Monte Carlo to
 
 **base.py** — Scrapes OPR, DPR, CCWM, match predictions, ranking predictions, and stat distributions from the TBA API for a given event. Outputs clean CSVs to data/processed/.
 
-**montecarlo.py** — Simulates the full tournament 100 times using OPR-based match simulation with calibrated RP rates pulled from real match data. Outputs predicted rankings and average RP per team.
+**montecarlo.py** — Simulates the full tournament 100 times using OPR-based match simulation, with an Energized RP rate calibrated from real match data. Outputs predicted rankings and average RP per team.
 
 **buldteamdatafunc.py** — Aggregates all data sources (TBA stats, Monte Carlo results, human scouting, metadata) into a single structured dict per team.
 
-**analysts.py** — Runs each team through Gemini and GPT-4o in parallel using a structured analyst prompt. Produces prose scouting reports + structured JSON output covering tier rating, cycle profile, alliance role, RP contributions, strengths, weaknesses, and match strategy.
+**analysts.py** — Runs each team through Gemini, then GPT-4o, using a structured analyst prompt. Produces prose scouting reports + structured JSON output covering tier rating, cycle profile, alliance role, RP contributions, strengths, weaknesses, and match strategy.
 
 ## Sample Output
 
