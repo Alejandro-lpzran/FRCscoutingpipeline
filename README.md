@@ -14,7 +14,7 @@ Pulls live match and team data from The Blue Alliance API, runs a Monte Carlo to
 
 **buldteamdatafunc.py** — Aggregates all data sources (TBA stats, Monte Carlo results, human scouting, metadata) into a single structured dict per team.
 
-**step2.py** — Runs each team through Gemini and GPT-4o in parallel using a structured analyst prompt. Produces prose scouting reports + structured JSON output covering tier rating, cycle profile, alliance role, RP contributions, strengths, weaknesses, and match strategy.
+**analysts.py** — Runs each team through Gemini and GPT-4o in parallel using a structured analyst prompt. Produces prose scouting reports + structured JSON output covering tier rating, cycle profile, alliance role, RP contributions, strengths, weaknesses, and match strategy.
 
 ## Sample Output
 
@@ -39,7 +39,7 @@ OPENAI_KEY=your_openai_key
 ```bash
 python -m pipeline.base          # Pull and process TBA data
 python -m pipeline.montecarlo    # Run tournament simulation
-python -m pipeline.step2         # Generate AI scouting reports
+python -m pipeline.analysts      # Generate AI scouting reports
 ```
 
 ## Stack
