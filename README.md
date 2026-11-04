@@ -40,7 +40,7 @@ pipeline/         Pipeline code
 data/raw/         Inputs no script produces (scouting export, team list)
 data/processed/   Everything the pipeline writes, including LLM reports; safe to rebuild
 evals/            Evaluations (empty for now)
-dashboard/        Dashboard (empty for now)
+dashboard/        Streamlit dashboard
 ```
 
 ## Usage
@@ -51,8 +51,11 @@ Run from the repo root:
 python -m pipeline.base          # Pull and process TBA data
 python -m pipeline.montecarlo    # Run tournament simulation
 python -m pipeline.analysts      # Generate AI scouting reports
+streamlit run dashboard/app.py   # Explore everything in the browser
 ```
+
+The dashboard works with whichever stages have run so far. Press **Reload data** after a backend run to see the new output.
 
 ## Stack
 
-Python, pandas, numpy, The Blue Alliance API, Google Gemini, OpenAI GPT-4o
+Python, pandas, numpy, The Blue Alliance API, Google Gemini, OpenAI GPT-4o, Streamlit
