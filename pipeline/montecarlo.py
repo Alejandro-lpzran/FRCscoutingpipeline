@@ -17,6 +17,7 @@ session = requests.Session()
 session.headers.update(headers)
 
 EVENT_KEY = "2026nyn2"
+TOTAL_REGIONALS = 1000
 
 # Load OPR data
 df = pd.read_csv(PROCESSED_DIR / "opr_tba_gotham.csv", index_col=0)
@@ -181,15 +182,15 @@ def simulate_regional(rp_rates):
 if __name__ == "__main__":
     rp_rates = get_rp_rates(EVENT_KEY)
 
-    print("\nRunning 100 simulated regionals...")
-    total_regionals = 100
+    print(f"\nRunning {TOTAL_REGIONALS} simulated regionals...")
     results = simulate_regional(rp_rates)
 
-    for i in range(total_regionals - 1):
+    for i in range(TOTAL_REGIONALS - 1):
         rN = simulate_regional(rp_rates)
         results["total_rp"] += rN["total_rp"]
 
-    results["total_rp"] = results["total_rp"] // total_regionals
+    # Keep decimals. Rounding to whole RP creates ties that get ranked arbitrarily.
+    results["total_rp"] = (results["total_rp"] / TOTAL_REGIONALS).round(2)
     results = results.sort_values(by="total_rp", ascending=False).reset_index(drop=True)
     results["rank"] = results.index + 1
 

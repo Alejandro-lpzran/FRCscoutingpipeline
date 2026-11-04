@@ -10,7 +10,7 @@ Pulls live match and team data from The Blue Alliance API, runs a Monte Carlo to
 
 **base.py** — Scrapes OPR, DPR, CCWM, match predictions, ranking predictions, and stat distributions from the TBA API for a given event. Outputs clean CSVs to data/processed/.
 
-**montecarlo.py** — Simulates the full tournament 100 times using OPR-based match simulation, with an Energized RP rate calibrated from real match data. Outputs predicted rankings and average RP per team.
+**montecarlo.py** — Simulates the full tournament 1000 times using OPR-based match simulation, with an Energized RP rate calibrated from real match data. Outputs predicted rankings and average RP per team.
 
 **team_data.py** — Aggregates all data sources (TBA stats, Monte Carlo results, human scouting, metadata) into a single structured dict per team. Human scouting is limited to real Gotham matches.
 
