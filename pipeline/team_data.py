@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import ast
 import json
+from pipeline.events import event_group
 from pipeline.paths import RAW_DIR, PROCESSED_DIR
 
 # ── Load all data sources ────────────────────────────────────────────────────
@@ -13,6 +14,9 @@ rankings_df      = pd.read_csv(PROCESSED_DIR / "rankings_tba_gotham.csv")
 ranking_pred_df  = pd.read_csv(PROCESSED_DIR / "ranking_predictions_tba_gotham.csv")
 stats_pred_df    = pd.read_csv(PROCESSED_DIR / "stats_prediction_tba_gotham.csv")
 montecarlo_df    = pd.read_csv(PROCESSED_DIR / "monte_carlo_sim_2026nyn2.csv")
+
+# Reports only use real Gotham matches, not practice or other events
+humanscout_df    = humanscout_df[humanscout_df["event"].map(event_group) == "Gotham"].copy()
 
 
 # ── Normalize all team keys ──────────────────────────────────────────────────
@@ -60,12 +64,12 @@ def build_team_data(team_number: str) -> dict:
     detail = humanscout_df[humanscout_df["teamNumber"] == team_number]
 
     if detail.empty:
-        result["matches_played"] = 0
+        result["scouted_matches"] = 0
         result.update({k: None for k in ["auto_fuel_avg", "auto_tower_avg", "teleop_cycles_avg", 
                                         "teleop_fuel_avg", "teleop_tower_avg", "fouls_avg", "avg_points"]})
         result["all_comments"] = []
     else:
-        result["matches_played"] = len(detail)
+        result["scouted_matches"] = len(detail)
         result["auto_fuel_avg"]  = detail["auto_fuel"].mean() if "auto_fuel" in detail.columns else None
         result["auto_tower_avg"] = detail["auto_tower"].mean() if "auto_tower" in detail.columns else None
         result["teleop_cycles_avg"] = detail["teleop_cycles"].mean() if "teleop_cycles" in detail.columns else None

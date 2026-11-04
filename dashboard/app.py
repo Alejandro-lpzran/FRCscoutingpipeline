@@ -2,7 +2,6 @@ import ast
 import json
 import re
 import sys
-import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -11,6 +10,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from pipeline.events import event_group
 from pipeline.paths import RAW_DIR, PROCESSED_DIR, REPORTS_DIR
 
 EVENT_KEY = "2026nyn2"
@@ -68,16 +68,6 @@ def read_csv(name, team_column=None, **kwargs):
     if team_column:
         df["team"] = df[team_column].astype(str).str.replace("frc", "")
     return df
-
-
-def event_group(event):
-    """Sort the free-text event names scouts typed into Gotham, Practice, or Other events."""
-    name = unicodedata.normalize("NFKD", str(event)).encode("ascii", "ignore").decode().lower()
-    if "pract" in name or "test" in name:
-        return "Practice"
-    if "hali" in name or "hudson" in name:
-        return "Other events"
-    return "Gotham"
 
 
 def load_scouting():
@@ -516,9 +506,9 @@ with st.sidebar:
     scouting = scouting_all
     if not scouting_all.empty:
         groups = sorted(scouting_all["event_group"].unique())
-        picked = st.multiselect("Scouting data from", groups, default=groups)
+        picked = st.multiselect("Scouting data from", groups, default=[g for g in groups if g == "Gotham"])
         scouting = scouting_all[scouting_all["event_group"].isin(picked)]
-        st.caption(f"{len(scouting)} of {len(scouting_all)} scouted matches. AI reports were written from all of them, whatever this is set to.")
+        st.caption(f"{len(scouting)} of {len(scouting_all)} scouted matches. AI reports only use Gotham matches, whatever this is set to.")
 
 table = build_team_table(data, scouting, reports)
 
