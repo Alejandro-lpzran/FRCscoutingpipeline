@@ -12,9 +12,14 @@ from openai import OpenAI
 from google import genai
 from google.genai import types as genai_types
 from pipeline.buldteamdatafunc import build_team_data
+from pipeline.paths import REPORTS_DIR
 
 load_dotenv()
 print("imports done")
+
+GEMINI_DIR = REPORTS_DIR / "gemini_reports"
+GPT_DIR    = REPORTS_DIR / "gpt_reports"
+FINAL_DIR  = REPORTS_DIR / "final_reports"
 
 # ── Keys ──────────────────────────────────────────────────────────────────────
 
@@ -150,15 +155,15 @@ def extract_json_from_report(report: str) -> str:
 
 
 def run_full_pipeline(team_list: list, delay: int = 5):
-    os.makedirs("gemini_reports", exist_ok=True)
-    os.makedirs("gpt_reports",    exist_ok=True)
+    os.makedirs(GEMINI_DIR, exist_ok=True)
+    os.makedirs(GPT_DIR,    exist_ok=True)
 
 
     completed, failed = 0, []
 
     for i, team in enumerate(team_list):
         print(f"\n[{i+1}/{len(team_list)}] Processing team {team}...")
-        final_path = f"final_reports/final_{team}.txt"
+        final_path = f"{FINAL_DIR}/final_{team}.txt"
 
         if os.path.exists(final_path):
             print(f"  Already complete, skipping.")
@@ -167,7 +172,7 @@ def run_full_pipeline(team_list: list, delay: int = 5):
 
         try:
             # Gemini
-            gemini_path = f"gemini_reports/gemini_{team}.txt"
+            gemini_path = f"{GEMINI_DIR}/gemini_{team}.txt"
             if os.path.exists(gemini_path):
                 gemini_report = open(gemini_path, "r", encoding="utf-8").read()
                 print("  Gemini loaded from file.")
@@ -177,7 +182,7 @@ def run_full_pipeline(team_list: list, delay: int = 5):
                 time.sleep(delay)
 
             # GPT
-            gpt_path = f"gpt_reports/gpt_{team}.txt"
+            gpt_path = f"{GPT_DIR}/gpt_{team}.txt"
             if os.path.exists(gpt_path):
                 gpt_report = open(gpt_path, "r", encoding="utf-8").read()
                 print("  GPT loaded from file.")
@@ -205,13 +210,13 @@ if __name__ == "__main__":
     ]
     run_full_pipeline(TOP_24, delay=5)
     # Combine gemini + gpt reports side by side into one txt
-    files = sorted([f for f in os.listdir("gemini_reports") if f.endswith(".txt")])
+    files = sorted([f for f in os.listdir(GEMINI_DIR) if f.endswith(".txt")])
     combined = ""
 
     for filename in files:
         team = filename.replace("gemini_", "").replace(".txt", "")
-        gemini_path = f"gemini_reports/gemini_{team}.txt"
-        gpt_path    = f"gpt_reports/gpt_{team}.txt"
+        gemini_path = f"{GEMINI_DIR}/gemini_{team}.txt"
+        gpt_path    = f"{GPT_DIR}/gpt_{team}.txt"
 
         combined += f"\n{'='*60}\nTEAM {team}\n{'='*60}\n"
 
@@ -220,13 +225,12 @@ if __name__ == "__main__":
         if os.path.exists(gpt_path):
             combined += f"\n--- GPT ---\n{open(gpt_path).read()}\n"
 
-    with open("all_reports.txt", "w", encoding="utf-8") as f:
+    with open(REPORTS_DIR / "all_reports.txt", "w", encoding="utf-8") as f:
         f.write(combined)
 
     print(f"Combined {len(files)} teams into all_reports.txt")
 
-    FINAL_DIR   = "final_reports"
-    OUTPUT_FILE = "all_final_reports.txt"
+    OUTPUT_FILE = REPORTS_DIR / "all_final_reports.txt"
  
     files = sorted([f for f in os.listdir(FINAL_DIR) if f.endswith(".txt")])
  

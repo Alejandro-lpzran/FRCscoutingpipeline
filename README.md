@@ -8,7 +8,7 @@ Pulls live match and team data from The Blue Alliance API, runs a Monte Carlo to
 
 ## Pipeline stages
 
-**base.py** — Scrapes OPR, DPR, CCWM, match predictions, ranking predictions, and stat distributions from the TBA API for a given event. Outputs clean CSVs to /data.
+**base.py** — Scrapes OPR, DPR, CCWM, match predictions, ranking predictions, and stat distributions from the TBA API for a given event. Outputs clean CSVs to data/processed/.
 
 **montecarlo.py** — Simulates the full tournament 100 times using OPR-based match simulation with calibrated RP rates pulled from real match data. Outputs predicted rankings and average RP per team.
 

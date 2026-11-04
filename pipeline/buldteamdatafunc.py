@@ -2,16 +2,17 @@ import pandas as pd
 import numpy as np
 import ast
 import json
+from pipeline.paths import RAW_DIR, PROCESSED_DIR
 
 # ── Load all data sources ────────────────────────────────────────────────────
 
-metadata_df      = pd.read_csv(f"data/gotham_2026_teams.csv")
-humanscout_df    = pd.read_csv(f"data/scouting_datanyc.csv", engine="python", on_bad_lines="warn")
-opr_df           = pd.read_csv(f"data/opr_tba_gotham.csv")
-rankings_df      = pd.read_csv(f"data/rankings_tba_gotham.csv")
-ranking_pred_df  = pd.read_csv(f"data/ranking_predictions_tba_gotham.csv")
-stats_pred_df    = pd.read_csv(f"data/stats_prediction_tba_gotham.csv")
-montecarlo_df    = pd.read_csv(f"data/monte_carlo_sim_2026nyn2.csv")
+metadata_df      = pd.read_csv(RAW_DIR / "gotham_2026_teams.csv")
+humanscout_df    = pd.read_csv(RAW_DIR / "scouting_datanyc.csv", engine="python", on_bad_lines="warn")
+opr_df           = pd.read_csv(PROCESSED_DIR / "opr_tba_gotham.csv")
+rankings_df      = pd.read_csv(PROCESSED_DIR / "rankings_tba_gotham.csv")
+ranking_pred_df  = pd.read_csv(PROCESSED_DIR / "ranking_predictions_tba_gotham.csv")
+stats_pred_df    = pd.read_csv(PROCESSED_DIR / "stats_prediction_tba_gotham.csv")
+montecarlo_df    = pd.read_csv(PROCESSED_DIR / "monte_carlo_sim_2026nyn2.csv")
 
 
 # ── Normalize all team keys ──────────────────────────────────────────────────

@@ -1,6 +1,14 @@
 .env
-data/
 apis.env
+
+# Data stays local; only the folder layout is tracked
+data/*
+!data/raw/
+!data/processed/
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 
 # Python
 __pycache__/

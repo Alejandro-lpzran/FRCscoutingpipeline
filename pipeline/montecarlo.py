@@ -6,6 +6,7 @@ import requests
 import os
 from math import ceil
 from dotenv import load_dotenv
+from pipeline.paths import PROCESSED_DIR
 
 load_dotenv()
 
@@ -18,7 +19,7 @@ session.headers.update(headers)
 EVENT_KEY = "2026nyn2"
 
 # Load OPR data
-df = pd.read_csv(f"data/opr_tba_gotham.csv", index_col=0)
+df = pd.read_csv(PROCESSED_DIR / "opr_tba_gotham.csv", index_col=0)
 df.index.name = "team_key"
 df = df.reset_index()
 df = df.rename(columns={"team_key": "team", "oprs": "opr", "dprs": "dpr", "ccwms": "ccwm"})
@@ -195,9 +196,10 @@ if __name__ == "__main__":
     print("\nPredicted Seedings:")
     print(results.to_string())
 
-    os.makedirs("data", exist_ok=True)
-    results.to_csv(f"data/monte_carlo_sim_{EVENT_KEY}.csv", index=False)
-    print(f"Saved to data/monte_carlo_sim_{EVENT_KEY}.csv")
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
+    output_path = PROCESSED_DIR / f"monte_carlo_sim_{EVENT_KEY}.csv"
+    results.to_csv(output_path, index=False)
+    print(f"Saved to {output_path}")
 
     real_rp = get_real_rp_per_team(EVENT_KEY)
     if real_rp:

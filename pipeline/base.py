@@ -4,8 +4,10 @@ import pandas as pd
 import json
 from dotenv import load_dotenv
 import os
+from pipeline.paths import PROCESSED_DIR
 
 load_dotenv()
+os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 #//Important
 baseurl = "https://www.thebluealliance.com/api/v3"
@@ -59,7 +61,7 @@ for match_level in ["qual", "playoff"]:
 match_pred_df = pd.DataFrame(match_rows) 
 
 match_pred_slim = match_pred_df[["match_key", "level", "predicted_winner", "win_prob", "red_score", "blue_score"]].copy()
-match_pred_slim.to_csv("data/match_predictions_tba_gotham_slim.csv", index=False)
+match_pred_slim.to_csv(PROCESSED_DIR / "match_predictions_tba_gotham_slim.csv", index=False)
 print("match_predictions_tba_gotham")
 
 # 2. Ranking predictions — one row per team
@@ -94,14 +96,12 @@ rkdf = pd.DataFrame(rankings("2026nyn2")["rankings"])
 
 
 #csv makers
-os.makedirs("data", exist_ok=True)
-
-match_pred_df.to_csv("data/match_predictions_tba_gotham.csv", index=False)
-ranking_pred_df.to_csv("data/ranking_predictions_tba_gotham.csv", index=False)
-stat_df.to_csv("data/stats_prediction_tba_gotham.csv", index=False)
+match_pred_df.to_csv(PROCESSED_DIR / "match_predictions_tba_gotham.csv", index=False)
+ranking_pred_df.to_csv(PROCESSED_DIR / "ranking_predictions_tba_gotham.csv", index=False)
+stat_df.to_csv(PROCESSED_DIR / "stats_prediction_tba_gotham.csv", index=False)
 oprdf.index.name = "team_key"
-oprdf.to_csv("data/opr_tba_gotham.csv", index=True)
-rkdf.to_csv("data/rankings_tba_gotham.csv", index=False)
+oprdf.to_csv(PROCESSED_DIR / "opr_tba_gotham.csv", index=True)
+rkdf.to_csv(PROCESSED_DIR / "rankings_tba_gotham.csv", index=False)
 matches = session.get(f"{baseurl}/event/2026nyn2/matches").json()
 completed = [m for m in matches if m.get("actual_time") and m.get("comp_level") == "qm"]
 if completed:
@@ -111,4 +111,4 @@ if __name__ == "__main__":
     oprdf = pd.DataFrame(EventOPR("2026nyn2"))
     # etc
 
-match_pred_df.to_csv("data/match_predictions_2026nyn2.csv", index=False)
+match_pred_df.to_csv(PROCESSED_DIR / "match_predictions_2026nyn2.csv", index=False)
