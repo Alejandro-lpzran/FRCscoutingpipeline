@@ -51,7 +51,6 @@ def build_team_data(team_number: str) -> dict:
         s = summary_row.iloc[0]
         # Pulling from your confirmed column list
         result["nickname"]    = s.get("nickname")
-        result["rank"]        = s.get("rank")
         result["global_opr"]  = s.get("global_opr")
         result["global_rank"] = s.get("global_rank")
         result["last_event"]  = s.get("last_event")
@@ -112,6 +111,16 @@ def build_team_data(team_number: str) -> dict:
     if not mc_row.empty:
         result["mc_predicted_rank"] = int(mc_row.iloc[0]["rank"])
         result["mc_predicted_rp"]   = float(mc_row.iloc[0]["total_rp"])
+
+    # ── 7. Real standing at this event ──
+    standing = rankings_df[rankings_df["team_number"] == team_number]
+    if not standing.empty:
+        r = standing.iloc[0]
+        record = ast.literal_eval(r["record"])
+        result["rank"]           = int(r["rank"])
+        result["record"]         = f"{record['wins']}-{record['losses']}-{record['ties']}"
+        result["ranking_points"] = ast.literal_eval(r["extra_stats"])[0]
+        result["matches_played"] = int(r["matches_played"])
     return result
 
 # ── Quick test ───────────────────────────────────────────────────────────────
