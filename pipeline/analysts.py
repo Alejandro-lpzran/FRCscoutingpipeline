@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from google import genai
 from google.genai import types as genai_types
-from pipeline.team_data import build_team_data
+from pipeline.team_data import build_team_data, top_teams
 from pipeline.paths import REPORTS_DIR
 
 load_dotenv()
@@ -204,13 +204,7 @@ def run_full_pipeline(team_list: list, delay: int = 5):
 
 
 if __name__ == "__main__":
-    TOP_24 = [
-        "1796", "4027", "694", "8267", "4122", "8398",
-        "3158", "1156", "2869", "358", "4571", "9030",
-        "7840", "8011", "3950", "10262", "1880", "8739",
-        "6880", "7551", "334", "2875", "7272", "10045"
-    ]
-    run_full_pipeline(TOP_24, delay=5)
+    run_full_pipeline(top_teams(24), delay=5)
     # Combine gemini + gpt reports side by side into one txt
     files = sorted([f for f in os.listdir(GEMINI_DIR) if f.endswith(".txt")])
     combined = ""

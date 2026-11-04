@@ -123,6 +123,11 @@ def build_team_data(team_number: str) -> dict:
         result["matches_played"] = int(r["matches_played"])
     return result
 
+
+def top_teams(n: int) -> list:
+    """Team numbers of the n best-ranked teams in the real event rankings."""
+    return rankings_df.sort_values("rank")["team_number"].head(n).tolist()
+
 # ── Quick test ───────────────────────────────────────────────────────────────
 
 class FRCEncoder(json.JSONEncoder):
