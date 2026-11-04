@@ -24,17 +24,28 @@ Each team receives independent analysis from Gemini and GPT-4o covering performa
 
 ## Setup
 
+Requires Python 3.11+.
+
 ```bash
 pip install -r requirements.txt
+cp .env.example .env    # Then fill in your API keys
 ```
 
-Create a `.env` file based on `.env.example`:
+`data/` is not tracked in git. Put the team list and scouting export in `data/raw/` before running: `gotham_2026_teams.csv` and `scouting_datanyc.csv`.
 
-TBAKEY=your_tba_api_key
-GEMINI_KEY=your_gemini_key
-OPENAI_KEY=your_openai_key
+## Project layout
+
+```
+pipeline/         Pipeline code
+data/raw/         Inputs no script produces (scouting export, team list)
+data/processed/   Everything the pipeline writes, including LLM reports; safe to rebuild
+evals/            Evaluations (empty for now)
+dashboard/        Dashboard (empty for now)
+```
 
 ## Usage
+
+Run from the repo root:
 
 ```bash
 python -m pipeline.base          # Pull and process TBA data
