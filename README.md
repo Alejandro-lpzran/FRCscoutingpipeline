@@ -8,13 +8,13 @@ Pulls live match and team data from The Blue Alliance API, runs a Monte Carlo to
 
 ## Pipeline stages
 
-**base.py** — Scrapes OPR, DPR, CCWM, match predictions, ranking predictions, and stat distributions from the TBA API for a given event. Outputs clean CSVs to /data.
+**base.py** — Scrapes OPR, DPR, CCWM, match predictions, ranking predictions, and stat distributions from the TBA API for a given event. Outputs clean CSVs to data/processed/.
 
-**montecarlo.py** — Simulates the full tournament 100 times using OPR-based match simulation with calibrated RP rates pulled from real match data. Outputs predicted rankings and average RP per team.
+**montecarlo.py** — Simulates the full tournament 1000 times using OPR-based match simulation, with an Energized RP rate calibrated from real match data. Outputs predicted rankings and average RP per team.
 
-**buldteamdatafunc.py** — Aggregates all data sources (TBA stats, Monte Carlo results, human scouting, metadata) into a single structured dict per team.
+**team_data.py** — Aggregates all data sources (TBA stats, Monte Carlo results, human scouting, metadata) into a single structured dict per team. Human scouting is limited to real Gotham matches.
 
-**step2.py** — Runs each team through Gemini and GPT-4o in parallel using a structured analyst prompt. Produces prose scouting reports + structured JSON output covering tier rating, cycle profile, alliance role, RP contributions, strengths, weaknesses, and match strategy.
+**analysts.py** — Runs each team through Gemini, then GPT-4o, using a structured analyst prompt. Produces prose scouting reports + structured JSON output covering tier rating, cycle profile, alliance role, RP contributions, strengths, weaknesses, and match strategy.
 
 ## Sample Output
 
@@ -24,24 +24,44 @@ Each team receives independent analysis from Gemini and GPT-4o covering performa
 
 ## Setup
 
+Requires Python 3.11+.
+
 ```bash
 pip install -r requirements.txt
+cp .env.example .env    # Then fill in your API keys
 ```
 
-Create a `.env` file based on `.env.example`:
+`data/` is not tracked in git. Put the team list and scouting export in `data/raw/` before running: `gotham_2026_teams.csv` and `scouting_datanyc.csv`.
 
-TBAKEY=your_tba_api_key
-GEMINI_KEY=your_gemini_key
-OPENAI_KEY=your_openai_key
+## Project layout
+
+```
+pipeline/         Pipeline code
+data/raw/         Inputs no script produces (scouting export, team list)
+data/processed/   Everything the pipeline writes, including LLM reports; safe to rebuild
+evals/            Evaluations (empty for now)
+dashboard/        Streamlit dashboard
+```
 
 ## Usage
 
+Run from the repo root:
+
 ```bash
-python base.py          # Pull and process TBA data
-python montecarlo.py    # Run tournament simulation
-python llm.py           # Generate AI scouting reports
+python -m pipeline.base          # Pull and process TBA data
+python -m pipeline.montecarlo    # Run tournament simulation
+python -m pipeline.analysts      # Generate AI scouting reports
+streamlit run dashboard/app.py   # Explore everything in the browser
 ```
+
+The dashboard works with whichever stages have run so far. Press **Reload data** after a backend run to see the new output.
+
+## Deploy
+
+`./deploy.sh` publishes the dashboard and the current contents of `data/` to Vercel. Deployed data is a snapshot, so run it again after a backend run to publish new results.
+
+The deployed site requires a password, set with the `DASHBOARD_PASSWORD` environment variable on Vercel. With no password set, nobody can log in. Running the dashboard locally needs no password.
 
 ## Stack
 
-Python, pandas, numpy, The Blue Alliance API, Google Gemini, OpenAI GPT-4o
+Python, pandas, numpy, The Blue Alliance API, Google Gemini, OpenAI GPT-4o, Streamlit

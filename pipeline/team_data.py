@@ -2,16 +2,21 @@ import pandas as pd
 import numpy as np
 import ast
 import json
+from pipeline.events import event_group
+from pipeline.paths import RAW_DIR, PROCESSED_DIR
 
 # ── Load all data sources ────────────────────────────────────────────────────
 
-metadata_df      = pd.read_csv(f"data/gotham_2026_teams.csv")
-humanscout_df    = pd.read_csv(f"data/scouting_datanyc.csv", engine="python", on_bad_lines="warn")
-opr_df           = pd.read_csv(f"data/opr_tba_gotham.csv")
-rankings_df      = pd.read_csv(f"data/rankings_tba_gotham.csv")
-ranking_pred_df  = pd.read_csv(f"data/ranking_predictions_tba_gotham.csv")
-stats_pred_df    = pd.read_csv(f"data/stats_prediction_tba_gotham.csv")
-montecarlo_df    = pd.read_csv(f"data/monte_carlo_sim_2026nyn2.csv")
+metadata_df      = pd.read_csv(RAW_DIR / "gotham_2026_teams.csv")
+humanscout_df    = pd.read_csv(RAW_DIR / "scouting_datanyc.csv", engine="python", on_bad_lines="warn")
+opr_df           = pd.read_csv(PROCESSED_DIR / "opr_tba_gotham.csv")
+rankings_df      = pd.read_csv(PROCESSED_DIR / "rankings_tba_gotham.csv")
+ranking_pred_df  = pd.read_csv(PROCESSED_DIR / "ranking_predictions_tba_gotham.csv")
+stats_pred_df    = pd.read_csv(PROCESSED_DIR / "stats_prediction_tba_gotham.csv")
+montecarlo_df    = pd.read_csv(PROCESSED_DIR / "monte_carlo_sim_2026nyn2.csv")
+
+# Reports only use real Gotham matches, not practice or other events
+humanscout_df    = humanscout_df[humanscout_df["event"].map(event_group) == "Gotham"].copy()
 
 
 # ── Normalize all team keys ──────────────────────────────────────────────────
@@ -46,7 +51,6 @@ def build_team_data(team_number: str) -> dict:
         s = summary_row.iloc[0]
         # Pulling from your confirmed column list
         result["nickname"]    = s.get("nickname")
-        result["rank"]        = s.get("rank")
         result["global_opr"]  = s.get("global_opr")
         result["global_rank"] = s.get("global_rank")
         result["last_event"]  = s.get("last_event")
@@ -59,12 +63,12 @@ def build_team_data(team_number: str) -> dict:
     detail = humanscout_df[humanscout_df["teamNumber"] == team_number]
 
     if detail.empty:
-        result["matches_played"] = 0
+        result["scouted_matches"] = 0
         result.update({k: None for k in ["auto_fuel_avg", "auto_tower_avg", "teleop_cycles_avg", 
                                         "teleop_fuel_avg", "teleop_tower_avg", "fouls_avg", "avg_points"]})
         result["all_comments"] = []
     else:
-        result["matches_played"] = len(detail)
+        result["scouted_matches"] = len(detail)
         result["auto_fuel_avg"]  = detail["auto_fuel"].mean() if "auto_fuel" in detail.columns else None
         result["auto_tower_avg"] = detail["auto_tower"].mean() if "auto_tower" in detail.columns else None
         result["teleop_cycles_avg"] = detail["teleop_cycles"].mean() if "teleop_cycles" in detail.columns else None
@@ -107,7 +111,22 @@ def build_team_data(team_number: str) -> dict:
     if not mc_row.empty:
         result["mc_predicted_rank"] = int(mc_row.iloc[0]["rank"])
         result["mc_predicted_rp"]   = float(mc_row.iloc[0]["total_rp"])
+
+    # ── 7. Real standing at this event ──
+    standing = rankings_df[rankings_df["team_number"] == team_number]
+    if not standing.empty:
+        r = standing.iloc[0]
+        record = ast.literal_eval(r["record"])
+        result["rank"]           = int(r["rank"])
+        result["record"]         = f"{record['wins']}-{record['losses']}-{record['ties']}"
+        result["ranking_points"] = ast.literal_eval(r["extra_stats"])[0]
+        result["matches_played"] = int(r["matches_played"])
     return result
+
+
+def top_teams(n: int) -> list:
+    """Team numbers of the n best-ranked teams in the real event rankings."""
+    return rankings_df.sort_values("rank")["team_number"].head(n).tolist()
 
 # ── Quick test ───────────────────────────────────────────────────────────────
 

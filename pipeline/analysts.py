@@ -11,10 +11,17 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from google import genai
 from google.genai import types as genai_types
-from buldteamdatafunc import build_team_data
+from pipeline.team_data import build_team_data, top_teams
+from pipeline.paths import REPORTS_DIR
 
 load_dotenv()
 print("imports done")
+
+GEMINI_DIR = REPORTS_DIR / "gemini_reports"
+GPT_DIR    = REPORTS_DIR / "gpt_reports"
+
+GEMINI_MODEL = "gemini-3.6-flash"
+MAX_OUTPUT_TOKENS = 4000  # 1500 cut reports off mid-JSON
 
 # ── Keys ──────────────────────────────────────────────────────────────────────
 
@@ -45,6 +52,10 @@ RP thresholds at regionals: ENERGIZED = 100 fuel total, SUPERCHARGED = 360 fuel 
 CYCLES = complete fuel retrieval loops: travel to field center -> collect balls -> return -> shoot. High fuel + low cycles = high-capacity shooter. High cycles + moderate fuel = high-frequency runner. These are distinct alliance profiles. A high-capacity shooter needs a high-frequency runner alongside them. Two high-capacity shooters may bottleneck on ball supply.
 
 If foul values are negative, ignore them — data entry error.
+
+Values named tba_pred_* are predicted POINTS, not fuel counts. Never report them as fuel, cycles, or scouted performance.
+
+If scouted_matches is 0, nobody scouted this team at this event. Say "Not scouted" in Autonomous, Teleop, Endgame, and Cycle Analysis, and do not state or guess fuel counts, cycle profile, tower attempts, driving, or HUB timing. Base everything else only on rank, record, OPR, DPR, CCWM, and predictions, and say the assessment is limited. In the JSON, set auto_fuel_avg, auto_tower, teleop_fuel_avg, teleop_tower_level, climb_success_rate, avg_cycles, fuel_per_cycle, cycle_profile, and contributes_to_energized_rp, contributes_to_supercharged_rp, contributes_to_traversal_rp to null, and add "Not scouted" to red_flags.
 
 ---
 
@@ -119,11 +130,11 @@ def analyze_team_gemini(team_number: str) -> str:
     contents = [genai_types.Content(role="user", parts=[genai_types.Part.from_text(text=prompt)])]
     config = genai_types.GenerateContentConfig(
         thinking_config=genai_types.ThinkingConfig(thinking_level="LOW"),
-        max_output_tokens=1500,
+        max_output_tokens=MAX_OUTPUT_TOKENS,
     )
     print(f"\n{'='*60}\nGEMINI ANALYSIS — Team {team_number}\n{'='*60}\n")
     response = ""
-    for chunk in client.models.generate_content_stream(model="gemini-1.5-flash-8b", contents=contents, config=config):
+    for chunk in client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=config):
         if chunk.text:
             print(chunk.text, end="", flush=True)
             response += chunk.text
@@ -137,7 +148,7 @@ def analyze_team_gpt(team_number: str) -> str:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=1500,
+        max_tokens=MAX_OUTPUT_TOKENS,
     )
     result = response.choices[0].message.content
     print(result)
@@ -150,24 +161,18 @@ def extract_json_from_report(report: str) -> str:
 
 
 def run_full_pipeline(team_list: list, delay: int = 5):
-    os.makedirs("gemini_reports", exist_ok=True)
-    os.makedirs("gpt_reports",    exist_ok=True)
+    os.makedirs(GEMINI_DIR, exist_ok=True)
+    os.makedirs(GPT_DIR,    exist_ok=True)
 
 
     completed, failed = 0, []
 
     for i, team in enumerate(team_list):
         print(f"\n[{i+1}/{len(team_list)}] Processing team {team}...")
-        final_path = f"final_reports/final_{team}.txt"
-
-        if os.path.exists(final_path):
-            print(f"  Already complete, skipping.")
-            completed += 1
-            continue
 
         try:
             # Gemini
-            gemini_path = f"gemini_reports/gemini_{team}.txt"
+            gemini_path = f"{GEMINI_DIR}/gemini_{team}.txt"
             if os.path.exists(gemini_path):
                 gemini_report = open(gemini_path, "r", encoding="utf-8").read()
                 print("  Gemini loaded from file.")
@@ -177,7 +182,7 @@ def run_full_pipeline(team_list: list, delay: int = 5):
                 time.sleep(delay)
 
             # GPT
-            gpt_path = f"gpt_reports/gpt_{team}.txt"
+            gpt_path = f"{GPT_DIR}/gpt_{team}.txt"
             if os.path.exists(gpt_path):
                 gpt_report = open(gpt_path, "r", encoding="utf-8").read()
                 print("  GPT loaded from file.")
@@ -185,6 +190,8 @@ def run_full_pipeline(team_list: list, delay: int = 5):
                 gpt_report = analyze_team_gpt(team)
                 open(gpt_path, "w", encoding="utf-8").write(gpt_report)
                 time.sleep(delay)
+
+            completed += 1
 
         except Exception as e:
             print(f"\n  Team {team} FAILED: {e}")
@@ -197,21 +204,15 @@ def run_full_pipeline(team_list: list, delay: int = 5):
 
 
 if __name__ == "__main__":
-    TOP_24 = [
-        "1796", "4027", "694", "8267", "4122", "8398",
-        "3158", "1156", "2869", "358", "4571", "9030",
-        "7840", "8011", "3950", "10262", "1880", "8739",
-        "6880", "7551", "334", "2875", "7272", "10045"
-    ]
-    run_full_pipeline(TOP_24, delay=5)
+    run_full_pipeline(top_teams(24), delay=5)
     # Combine gemini + gpt reports side by side into one txt
-    files = sorted([f for f in os.listdir("gemini_reports") if f.endswith(".txt")])
+    files = sorted([f for f in os.listdir(GEMINI_DIR) if f.endswith(".txt")])
     combined = ""
 
     for filename in files:
         team = filename.replace("gemini_", "").replace(".txt", "")
-        gemini_path = f"gemini_reports/gemini_{team}.txt"
-        gpt_path    = f"gpt_reports/gpt_{team}.txt"
+        gemini_path = f"{GEMINI_DIR}/gemini_{team}.txt"
+        gpt_path    = f"{GPT_DIR}/gpt_{team}.txt"
 
         combined += f"\n{'='*60}\nTEAM {team}\n{'='*60}\n"
 
@@ -220,26 +221,7 @@ if __name__ == "__main__":
         if os.path.exists(gpt_path):
             combined += f"\n--- GPT ---\n{open(gpt_path).read()}\n"
 
-    with open("all_reports.txt", "w", encoding="utf-8") as f:
+    with open(REPORTS_DIR / "all_reports.txt", "w", encoding="utf-8") as f:
         f.write(combined)
 
     print(f"Combined {len(files)} teams into all_reports.txt")
-
-    FINAL_DIR   = "final_reports"
-    OUTPUT_FILE = "all_final_reports.txt"
- 
-    files = sorted([f for f in os.listdir(FINAL_DIR) if f.endswith(".txt")])
- 
-    combined = ""
-    for filename in files:
-        team = filename.replace("final_", "").replace(".txt", "")
-        with open(os.path.join(FINAL_DIR, filename), "r", encoding="utf-8") as f:
-            content = f.read()
-        combined += f"\n{'='*60}\nTEAM {team}\n{'='*60}\n{content}\n"
- 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(combined)
-    print(f"Combined {len(files)} reports into {OUTPUT_FILE}")
-
-
- 

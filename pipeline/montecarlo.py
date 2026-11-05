@@ -6,6 +6,7 @@ import requests
 import os
 from math import ceil
 from dotenv import load_dotenv
+from pipeline.paths import PROCESSED_DIR
 
 load_dotenv()
 
@@ -16,9 +17,10 @@ session = requests.Session()
 session.headers.update(headers)
 
 EVENT_KEY = "2026nyn2"
+TOTAL_REGIONALS = 1000
 
 # Load OPR data
-df = pd.read_csv(f"data/opr_tba_gotham.csv", index_col=0)
+df = pd.read_csv(PROCESSED_DIR / "opr_tba_gotham.csv", index_col=0)
 df.index.name = "team_key"
 df = df.reset_index()
 df = df.rename(columns={"team_key": "team", "oprs": "opr", "dprs": "dpr", "ccwms": "ccwm"})
@@ -180,24 +182,25 @@ def simulate_regional(rp_rates):
 if __name__ == "__main__":
     rp_rates = get_rp_rates(EVENT_KEY)
 
-    print("\nRunning 100 simulated regionals...")
-    total_regionals = 100
+    print(f"\nRunning {TOTAL_REGIONALS} simulated regionals...")
     results = simulate_regional(rp_rates)
 
-    for i in range(total_regionals - 1):
+    for i in range(TOTAL_REGIONALS - 1):
         rN = simulate_regional(rp_rates)
         results["total_rp"] += rN["total_rp"]
 
-    results["total_rp"] = results["total_rp"] // total_regionals
+    # Keep decimals. Rounding to whole RP creates ties that get ranked arbitrarily.
+    results["total_rp"] = (results["total_rp"] / TOTAL_REGIONALS).round(2)
     results = results.sort_values(by="total_rp", ascending=False).reset_index(drop=True)
     results["rank"] = results.index + 1
 
     print("\nPredicted Seedings:")
     print(results.to_string())
 
-    os.makedirs("data", exist_ok=True)
-    results.to_csv(f"data/monte_carlo_sim_{EVENT_KEY}.csv", index=False)
-    print(f"Saved to data/monte_carlo_sim_{EVENT_KEY}.csv")
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
+    output_path = PROCESSED_DIR / f"monte_carlo_sim_{EVENT_KEY}.csv"
+    results.to_csv(output_path, index=False)
+    print(f"Saved to {output_path}")
 
     real_rp = get_real_rp_per_team(EVENT_KEY)
     if real_rp:
@@ -207,8 +210,6 @@ if __name__ == "__main__":
     else:
         print("Rankings not available yet")
 
-print("buffer")
-
-print("\nRP rates being used:")
-for k, v in rp_rates.items():
-    print(f"  {k}: {v}")
+    print("\nRP rates being used:")
+    for k, v in rp_rates.items():
+        print(f"  {k}: {v}")
