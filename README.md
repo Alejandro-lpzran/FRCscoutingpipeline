@@ -56,6 +56,12 @@ streamlit run dashboard/app.py   # Explore everything in the browser
 
 The dashboard works with whichever stages have run so far. Press **Reload data** after a backend run to see the new output.
 
+## Deploy
+
+`./deploy.sh` publishes the dashboard and the current contents of `data/` to Vercel. Deployed data is a snapshot, so run it again after a backend run to publish new results.
+
+The deployed site requires a password, set with the `DASHBOARD_PASSWORD` environment variable on Vercel. With no password set, nobody can log in. Running the dashboard locally needs no password.
+
 ## Stack
 
 Python, pandas, numpy, The Blue Alliance API, Google Gemini, OpenAI GPT-4o, Streamlit
