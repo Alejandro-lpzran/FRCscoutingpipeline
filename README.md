@@ -40,7 +40,7 @@ pipeline/         Pipeline code
 data/raw/         Inputs no script produces (scouting export, team list)
 data/processed/   Everything the pipeline writes, including LLM reports; safe to rebuild
 evals/            Evaluations (empty for now)
-dashboard/        Streamlit dashboard
+web/              HTML/CSS/JS dashboard (reads data/processed/dashboard.json)
 ```
 
 ## Usage
@@ -51,17 +51,18 @@ Run from the repo root:
 python -m pipeline.base          # Pull and process TBA data
 python -m pipeline.montecarlo    # Run tournament simulation
 python -m pipeline.analysts      # Generate AI scouting reports
-streamlit run dashboard/app.py   # Explore everything in the browser
+python -m pipeline.export        # Bundle all output into data/processed/dashboard.json
+python -m http.server 8000       # Then open localhost:8000/web/
 ```
 
-The dashboard works with whichever stages have run so far. Press **Reload data** after a backend run to see the new output.
+The dashboard works with whichever stages have run so far. Re-run `python -m pipeline.export` after a backend run, then press **Reload data**.
 
 ## Deploy
 
-`./deploy.sh` publishes the dashboard and the current contents of `data/` to Vercel. Deployed data is a snapshot, so run it again after a backend run to publish new results.
+`./deploy.sh` rebuilds `dashboard.json`, then publishes `web/` and that one JSON file to Vercel as static files. No CSVs or `.env` get uploaded. Deployed data is a snapshot, so run it again after a backend run to publish new results.
 
-The deployed site requires a password, set with the `DASHBOARD_PASSWORD` environment variable on Vercel. With no password set, nobody can log in. Running the dashboard locally needs no password.
+The deployed site has no password: anyone with the URL can see it.
 
 ## Stack
 
-Python, pandas, numpy, The Blue Alliance API, Google Gemini, OpenAI GPT-4o, Streamlit
+Python, pandas, numpy, The Blue Alliance API, Google Gemini, OpenAI GPT-4o, plain HTML/CSS/JS
